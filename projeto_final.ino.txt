@@ -1,0 +1,92 @@
+#include <WiFi.h>
+#include <PubSubClient.h>
+#include "DHT.h"
+
+// Configurações dos Pinos
+#define DHTPIN 4
+#define DHTTYPE DHT22
+#define GAS_PIN 34
+#define BUZZER_PIN 18
+
+// Configurações de Wi-Fi e MQTT
+const char* ssid = "Wokwi-GUEST";
+const char* password = "";
+const char* mqtt_server = "broker.hivemq.com";
+
+WiFiClient espClient;
+PubSubClient client(espClient);
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup_wifi() {
+  delay(10);
+  Serial.println();
+  Serial.print("Conectando-se a ");
+  Serial.println(ssid);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi conectado!");
+}
+
+void reconnect() {
+  while (!client.connected()) {
+    Serial.print("Tentando conexão MQTT...");
+    if (client.connect("ESP32_Mackenzie_A3")) {
+      Serial.println("conectado!");
+    } else {
+      delay(5000);
+    }
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(BUZZER_PIN, OUTPUT);
+  dht.begin();
+  setup_wifi();
+  client.setServer(mqtt_server, 1883);
+}
+
+void loop() {
+  if (!client.connected()) {
+    reconnect();
+  }
+  client.loop();
+
+  float t = dht.readTemperature();
+  int nivelGas = analogRead(GAS_PIN);
+
+  // --- MEDIÇÃO DE TEMPO MQTT ---
+  unsigned long inicioMQTT = millis();
+  
+  char tempString[8];
+  dtostrf(t, 1, 2, tempString);
+  client.publish("mackenzie/projeto/temp", tempString);
+  
+  char gasString[8];
+  itoa(nivelGas, gasString, 10);
+  client.publish("mackenzie/projeto/gas", gasString);
+  
+  unsigned long fimMQTT = millis();
+  Serial.print("Tempo_Envio_MQTT_ms: ");
+  Serial.println(fimMQTT - inicioMQTT); 
+  // -----------------------------
+
+  // Lógica do Alarme
+  if (nivelGas > 1000 || t > 50) {
+    unsigned long inicioBuzzer = millis();
+    digitalWrite(BUZZER_PIN, HIGH);
+    client.publish("mackenzie/projeto/alerta", "PERIGO!");
+    unsigned long fimBuzzer = millis();
+    
+    Serial.print("Tempo_Alerta_ms: ");
+    Serial.println(fimBuzzer - inicioBuzzer);
+    Serial.println("⚠️ ALERTA ENVIADO VIA MQTT ⚠️");
+  } else {
+    digitalWrite(BUZZER_PIN, LOW);
+  }
+
+  delay(5000); 
+}
