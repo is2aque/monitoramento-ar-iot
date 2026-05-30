@@ -1,35 +1,48 @@
-monitoramento-ar-iot
 Monitoramento de Qualidade do Ar IoT - ESP32
-Este repositório contém a documentação e o código-fonte do projeto de monitoramento ambiental IoT, desenvolvido para medir níveis de gases e condições térmicas, com alerta sonoro local e transmissão de dados via protocolo MQTT.
+Este projeto apresenta um sistema de monitoramento ambiental inteligente, desenvolvido com ESP32, capaz de medir níveis de gases poluentes (MQ-135) e condições térmicas (DHT22), acionando alertas locais e enviando telemetria via protocolo MQTT.
 
 1. Funcionamento e Uso
-O sistema coleta dados de gases (MQ-135) e temperatura/umidade (DHT22), processa as informações localmente e transmite os dados via protocolo MQTT para um broker público na nuvem.
+O sistema opera realizando a leitura cíclica dos sensores. Caso os níveis de gás ou temperatura excedam os limites de segurança configurados, o sistema aciona um alarme sonoro (Buzzer) e publica um alerta no broker MQTT.
 
-Para reproduzir:
+Como reproduzir:
 
-Monte o circuito conectando os sensores e o buzzer ao ESP32 conforme o esquema do projeto (disponível no simulador Wokwi).
+Montagem: Conecte o sensor MQ-135 (analógico), DHT22 (digital) e o Buzzer ao ESP32 seguindo o esquema de pinagem no Wokwi.
 
-Configure as credenciais da sua rede Wi-Fi no arquivo projeto_final.ino.
+Configuração: Abra o código projeto_final.ino na Arduino IDE.
 
-O sistema utiliza o broker público broker.hivemq.com para o transporte das mensagens MQTT.
+Conexão: Insira as credenciais da sua rede Wi-Fi local nas constantes ssid e password.
 
-Utilize a Arduino IDE para compilar e carregar o código.
+Execução: Compile e carregue o código no seu ESP32. O sistema iniciará a publicação automática de dados no broker público broker.hivemq.com no tópico mackenzie/projeto/gas.
 
-2. Software e Documentação de Código
-O software foi desenvolvido na Arduino IDE (versão 2.x) utilizando linguagem C++. O arquivo com o código-fonte está disponível neste repositório como projeto_final.ino.
+2. Software e Documentação
+Ambiente de Desenvolvimento: Arduino IDE (versão 2.x).
+
+Linguagem: C++.
+
+Bibliotecas Principais: * PubSubClient (para comunicação MQTT).
+
+DHT sensor library (para leitura do sensor de temperatura/umidade).
+
+Código-fonte: Disponível no arquivo projeto_final.ino neste repositório.
 
 3. Descrição do Hardware
-Plataforma: Microcontrolador ESP32 (conectividade Wi-Fi/Bluetooth integrada).
+O projeto utiliza componentes de baixo custo e alta eficiência para o ecossistema IoT:
 
-Sensores:
+Microcontrolador: ESP32 (processador de 32 bits com Wi-Fi/Bluetooth integrado).
 
-MQ-135: Detecção de gases poluentes (NH₃, CO₂, fumaça, álcool).
+Sensor de Gás (MQ-135): Detector eletroquímico para NH₃, NOₓ, fumaça, álcool e CO₂.
 
-DHT22: Medição de temperatura e umidade relativa.
+Sensor de Temperatura e Umidade (DHT22): Sensor digital de alta precisão (AM2302).
 
-Atuador: Buzzer Ativo 5V (alerta sonoro local para condições críticas).
+Atuador: Buzzer Ativo 5V para alertas sonoros.
 
-4. Interfaces e Protocolos
-Protocolo: MQTT (Message Queuing Telemetry Transport).
+Prototipagem: O modelo de montagem e as conexões elétricas foram validados no ambiente Wokwi.
 
-Broker: Integração com o broker público HiveMQ (broker.hivemq.com) para transporte de mensagens em tempo real. O monitoramento pode ser validado através de qualquer cliente MQTT (como o HiveMQ Web Client) utilizando os tópicos definidos no código.
+4. Interfaces, Protocolos e Comunicação
+Protocolo de Transporte: MQTT (Message Queuing Telemetry Transport).
+
+Broker: Utiliza o broker público HiveMQ (broker.hivemq.com) para o modelo de publish/subscribe.
+
+Comunicação: Os dados são publicados em tópicos específicos (mackenzie/projeto/gas, mackenzie/projeto/alerta), garantindo latência mínima e interoperabilidade com outros dispositivos IoT.
+
+Projeto desenvolvido como parte da disciplina de IoT - 2026.
