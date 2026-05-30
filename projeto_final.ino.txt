@@ -2,13 +2,13 @@
 #include <PubSubClient.h>
 #include "DHT.h"
 
-// Configurações dos Pinos
+// --- Configurações dos Pinos ---
 #define DHTPIN 4
 #define DHTTYPE DHT22
 #define GAS_PIN 34
 #define BUZZER_PIN 18
 
-// Configurações de Wi-Fi e MQTT
+// --- Configurações de Wi-Fi e MQTT ---
 const char* ssid = "Wokwi-GUEST";
 const char* password = "";
 const char* mqtt_server = "broker.hivemq.com";
@@ -17,6 +17,7 @@ WiFiClient espClient;
 PubSubClient client(espClient);
 DHT dht(DHTPIN, DHTTYPE);
 
+// --- Funções de Conexão ---
 void setup_wifi() {
   delay(10);
   Serial.println();
@@ -41,6 +42,7 @@ void reconnect() {
   }
 }
 
+// --- Setup ---
 void setup() {
   Serial.begin(115200);
   pinMode(BUZZER_PIN, OUTPUT);
@@ -49,6 +51,7 @@ void setup() {
   client.setServer(mqtt_server, 1883);
 }
 
+// --- Loop Principal ---
 void loop() {
   if (!client.connected()) {
     reconnect();
@@ -58,7 +61,7 @@ void loop() {
   float t = dht.readTemperature();
   int nivelGas = analogRead(GAS_PIN);
 
-  // --- MEDIÇÃO DE TEMPO MQTT ---
+  // --- Medição e Envio de Dados (MQTT) ---
   unsigned long inicioMQTT = millis();
   
   char tempString[8];
@@ -72,12 +75,14 @@ void loop() {
   unsigned long fimMQTT = millis();
   Serial.print("Tempo_Envio_MQTT_ms: ");
   Serial.println(fimMQTT - inicioMQTT); 
-  // -----------------------------
 
-  // Lógica do Alarme
+  // --- Lógica do Alarme (Corrigida com tone) ---
   if (nivelGas > 1000 || t > 50) {
     unsigned long inicioBuzzer = millis();
-    digitalWrite(BUZZER_PIN, HIGH);
+    
+    // Usa tone para garantir som no buzzer
+    tone(BUZZER_PIN, 1000); 
+    
     client.publish("mackenzie/projeto/alerta", "PERIGO!");
     unsigned long fimBuzzer = millis();
     
@@ -85,8 +90,9 @@ void loop() {
     Serial.println(fimBuzzer - inicioBuzzer);
     Serial.println("⚠️ ALERTA ENVIADO VIA MQTT ⚠️");
   } else {
-    digitalWrite(BUZZER_PIN, LOW);
+    // Desliga o som quando não há perigo
+    noTone(BUZZER_PIN); 
   }
 
-  delay(5000); 
+  delay(5000); // Intervalo de 5 segundos
 }
